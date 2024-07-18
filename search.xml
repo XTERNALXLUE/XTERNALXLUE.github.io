@@ -24,6 +24,8 @@
             
             <tag> 背包问题 </tag>
             
+            <tag> 动态规划 </tag>
+            
         </tags>
       
     </entry>
@@ -546,35 +548,6 @@
             <tag> 算法 </tag>
             
             <tag> 排序 </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>【从零开发操作系统】1.搭建学习环境</title>
-      <link href="/2024/07/02/%E3%80%90%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%8F%91%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E3%80%911-%E6%90%AD%E5%BB%BA%E5%AD%A6%E4%B9%A0%E7%8E%AF%E5%A2%83/"/>
-      <url>/2024/07/02/%E3%80%90%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%8F%91%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E3%80%911-%E6%90%AD%E5%BB%BA%E5%AD%A6%E4%B9%A0%E7%8E%AF%E5%A2%83/</url>
-      
-        <content type="html"><![CDATA[<h1 id="一、配置学习环境"><a href="#一、配置学习环境" class="headerlink" title="一、配置学习环境"></a>一、配置学习环境</h1><hr><ol><li><p>安装Oracle Virtual Box</p></li><li><p>准备NASM环境</p></li><li><p>cmd执行diskpart</p> <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">DISKPART&gt; </span><span class="language-bash">create vdisk file=path\dingst.vhd maximum=10 <span class="built_in">type</span>=fixed</span></span><br></pre></td></tr></table></figure><p> 这一步创建了大小为10m的固定类型虚拟磁盘文件，文件名为dingst.vhd</p></li><li><p>编写hello.asm文件</p> <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">org 07c00h</span><br><span class="line">mov ax, cs</span><br><span class="line">mov ds, ax</span><br><span class="line">mov es, ax</span><br><span class="line">call Disp</span><br><span class="line">jmp $</span><br><span class="line">Disp:</span><br><span class="line">    mov ax, BootMsg</span><br><span class="line">    mov bp, ax</span><br><span class="line">    mov cx, 16</span><br><span class="line">    mov ax, 01301h</span><br><span class="line">    mov bx, 000ch</span><br><span class="line">    mov dl, 0</span><br><span class="line">    int 10h</span><br><span class="line">BootMsg: db &quot;Hello, OS World!&quot;</span><br><span class="line">times 510 - ($-$$) db 0</span><br><span class="line">dw 0xaa55</span><br></pre></td></tr></table></figure></li><li><p>切换到NASM环境所在目录下cmd执行<code>nasm path\hello.asm -o bootDINGST.bin</code>编译hello.asm</p></li><li><p><code>dd if=bootDINGST.bin of=path\dingst.vhd bs=512 count=1</code>将汇编生成二进制文件写入虚拟磁盘文件中</p><p> （此时文件目录如图<img src="https://img.picui.cn/free/2024/06/28/667ebda99b483.png" alt="1.1.png"></p></li><li><p>virtualbox新建虚拟电脑</p><ol><li>类型和版本都选Other或者Other&#x2F;Unknown</li><li>内存大小默认64MB即可</li><li>虚拟硬盘选项选择已有虚拟硬盘，找到一开始创建的dingst.vhd</li><li>选择完毕后创建即可</li></ol></li><li><p>开机，看到如下画面即配置完毕</p><p> <img src="https://img.picui.cn/free/2024/06/28/667ebda99c787.png" alt="1.2.png"></p><hr></li></ol>]]></content>
-      
-      
-      <categories>
-          
-          <category> 操作系统 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> 自制 </tag>
-            
-            <tag> 操作系统 </tag>
-            
-            <tag> tutorial </tag>
             
         </tags>
       
