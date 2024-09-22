@@ -4,6 +4,35 @@
   
     
     <entry>
+      <title>【每日一题】POJ-2387-Til the Cows Come Home</title>
+      <link href="/2024/09/22/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91POJ-2387-Til-the-Cows-Come-Home/"/>
+      <url>/2024/09/22/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91POJ-2387-Til-the-Cows-Come-Home/</url>
+      
+        <content type="html"><![CDATA[<h2 id="POJ-2387-Til-the-Cows-Come-Home"><a href="#POJ-2387-Til-the-Cows-Come-Home" class="headerlink" title="POJ-2387-Til the Cows Come Home"></a><a href="http://poj.org/problem?id=2387">POJ-2387-Til the Cows Come Home</a></h2><p><img src="https://img.picgo.net/2024/09/22/POJ23875a5fc7466d267b33.png" alt="POJ2387"></p><pre><code class="c++">#include &lt;algorithm&gt;#include &lt;iostream&gt;#include &lt;cstdlib&gt;#include &lt;cstring&gt;#include &lt;cstdio&gt;#include &lt;vector&gt;#include &lt;string&gt;#include &lt;cmath&gt;#include &lt;stack&gt;#include &lt;queue&gt;#include &lt;deque&gt;#include &lt;set&gt;#include &lt;map&gt;using namespace std;#define dbg(x) cout &lt;&lt; #x &lt;&lt; &quot; = &quot; &lt;&lt; x &lt;&lt; endltypedef long long ll;typedef pair&lt;int, int&gt; PII;typedef vector&lt;int&gt; VI;typedef vector&lt;vector&lt;int&gt; &gt; VVI;const int N = 1e3 + 10;const int M = 2e5 + 10;const int INF = 0x3f3f3f3f;const double EPS = 1e-6;const int MOD = 1e9 + 7;// 水~int n, m, g[N][N], dis[N];bool bk[N];void dijkstra() &#123;    dis[1] = 0;    for(int i = 1; i &lt; n; i++) &#123;        int t = -1;        for(int j = 1; j &lt;= n; j++)             if(!bk[j] &amp;&amp; (t == -1 || dis[j] &lt; dis[t])) t = j;        bk[t] = 1;        for(int j = 1; j &lt;= n; j++) &#123;            dis[j] = min(dis[j], dis[t] + g[t][j]);        &#125;    &#125;&#125;void solve() &#123;    memset(g, 0x3f, sizeof g);    memset(dis, 0x3f, sizeof dis);    cin &gt;&gt; m &gt;&gt; n;    for(int i = 0, a, b, c; i &lt; m; i++) &#123;        cin &gt;&gt; a &gt;&gt; b &gt;&gt; c;        g[a][b] = g[b][a] = min(g[a][b], c);    &#125;    dijkstra();    cout &lt;&lt; dis[n] &lt;&lt; endl;&#125;int main()&#123;    // int T; cin &gt;&gt; T;    // for(int i = 1; i &lt;= T; i++) &#123;        solve();    // &#125;        return 0;&#125;</code></pre>]]></content>
+      
+      
+      <categories>
+          
+          <category> 每日一题 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 每日一题 </tag>
+            
+            <tag> 最短路 </tag>
+            
+            <tag> Dijkstra </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>【每日一题】HDU-2138-How many prime numbers</title>
       <link href="/2024/09/21/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91HDU-2138-How-many-prime-numbers/"/>
       <url>/2024/09/21/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91HDU-2138-How-many-prime-numbers/</url>
