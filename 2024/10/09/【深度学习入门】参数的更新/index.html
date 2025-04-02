@@ -1,0 +1,411 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【深度学习入门】参数的更新 | XTERNALXLUE's blog</title><meta name="author" content="XTERNALXLUE"><meta name="copyright" content="XTERNALXLUE"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="【深度学习入门】参数的更新 神经网络的学习的目的是找到使损失函数的值尽可能小的参数 这是寻找最优参数的问题，解决这个问题的过程称为最优化（optimization） 但神经网络的最优化问题非常难 这是因为参数空间非常复杂，无法轻易找到最优解（无法使用那种通过解数学式一下子就求得最小值的方法） 而且，在深度神经网络中，参数的数量非常庞大，导致最优化问题更加复杂   随机梯度下降法SGD（stocha">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【深度学习入门】参数的更新">
+<meta property="og:url" content="https://xternalxlue.github.io/2024/10/09/%E3%80%90%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8%E3%80%91%E5%8F%82%E6%95%B0%E7%9A%84%E6%9B%B4%E6%96%B0/index.html">
+<meta property="og:site_name" content="XTERNALXLUE&#39;s blog">
+<meta property="og:description" content="【深度学习入门】参数的更新 神经网络的学习的目的是找到使损失函数的值尽可能小的参数 这是寻找最优参数的问题，解决这个问题的过程称为最优化（optimization） 但神经网络的最优化问题非常难 这是因为参数空间非常复杂，无法轻易找到最优解（无法使用那种通过解数学式一下子就求得最小值的方法） 而且，在深度神经网络中，参数的数量非常庞大，导致最优化问题更加复杂   随机梯度下降法SGD（stocha">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://xternalxlue.github.io/img/bg42.jpg">
+<meta property="article:published_time" content="2024-10-09T05:12:02.000Z">
+<meta property="article:modified_time" content="2025-01-05T06:19:31.963Z">
+<meta property="article:author" content="XTERNALXLUE">
+<meta property="article:tag" content="深度学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://xternalxlue.github.io/img/bg42.jpg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://xternalxlue.github.io/2024/10/09/%E3%80%90%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8%E3%80%91%E5%8F%82%E6%95%B0%E7%9A%84%E6%9B%B4%E6%96%B0/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=4.14.0-b3"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.35/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>(()=>{
+      const saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+      
+      window.btf = {
+        saveToLocal: saveToLocal,
+        getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+          script.src = url
+          script.async = true
+          script.onerror = reject
+          script.onload = script.onreadystatechange = function() {
+            const loadState = this.readyState
+            if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+            script.onload = script.onreadystatechange = null
+            resolve()
+          }
+
+          Object.keys(attr).forEach(key => {
+            script.setAttribute(key, attr[key])
+          })
+
+          document.head.appendChild(script)
+        }),
+
+        getCSS: (url, id = false) => new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+          link.rel = 'stylesheet'
+          link.href = url
+          if (id) link.id = id
+          link.onerror = reject
+          link.onload = link.onreadystatechange = function() {
+            const loadState = this.readyState
+            if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+            link.onload = link.onreadystatechange = null
+            resolve()
+          }
+          document.head.appendChild(link)
+        }),
+
+        addGlobalFn: (key, fn, name = false, parent = window) => {
+          const pjaxEnable = false
+          if (!pjaxEnable && key.startsWith('pjax')) return
+
+          const globalFn = parent.globalFn || {}
+          const keyObj = globalFn[key] || {}
+    
+          if (name && keyObj[name]) return
+    
+          name = name || Object.keys(keyObj).length
+          keyObj[name] = fn
+          globalFn[key] = keyObj
+          parent.globalFn = globalFn
+        }
+      }
+    
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+      
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })()</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.11.1/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【深度学习入门】参数的更新',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-05 14:19:31'
+}</script><link rel="stylesheet" href="/css/style.css"><meta name="generator" content="Hexo 7.2.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/./img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">320</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">75</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 文章</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/./img/bg42.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="XTERNALXLUE's blog"><span class="site-name">XTERNALXLUE's blog</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 文章</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【深度学习入门】参数的更新</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-10-09T05:12:02.000Z" title="发表于 2024-10-09 13:12:02">2024-10-09</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-01-05T06:19:31.963Z" title="更新于 2025-01-05 14:19:31">2025-01-05</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="【深度学习入门】参数的更新"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="【深度学习入门】参数的更新"><a href="#【深度学习入门】参数的更新" class="headerlink" title="【深度学习入门】参数的更新"></a>【深度学习入门】参数的更新</h2><blockquote>
+<p>神经网络的学习的目的是找到使损失函数的值尽可能小的参数</p>
+<p>这是寻找最优参数的问题，解决这个问题的过程称为最优化（optimization）</p>
+<p>但神经网络的最优化问题非常难</p>
+<p>这是因为参数空间非常复杂，无法轻易找到最优解（无法使用那种通过解数学式一下子就求得最小值的方法）</p>
+<p>而且，在深度神经网络中，参数的数量非常庞大，导致最优化问题更加复杂</p>
+</blockquote>
+<hr>
+<h3 id="随机梯度下降法SGD（stochastic-gradient-descent）"><a href="#随机梯度下降法SGD（stochastic-gradient-descent）" class="headerlink" title="随机梯度下降法SGD（stochastic gradient descent）"></a>随机梯度下降法SGD（stochastic gradient descent）</h3><p>一句话讲就是“朝着当前所在位置的坡度最大的方向前进”</p>
+<p><img src="https://www.helloimg.com/i/2024/10/09/6706121e95bbb.png" alt="sdxx36.png"></p>
+<p>Python代码实现如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SGD</span>:</span><br><span class="line">	<span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, lr=<span class="number">0.01</span></span>):</span><br><span class="line">		self.lr = lr</span><br><span class="line">        </span><br><span class="line"> 	<span class="keyword">def</span> <span class="title function_">update</span>(<span class="params">self, params, grads</span>):</span><br><span class="line">		<span class="keyword">for</span> key <span class="keyword">in</span> params.keys():</span><br><span class="line">			params[key] -= self.lr * grads[key]</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://www.helloimg.com/i/2024/10/09/6706121ed58a0.png" alt="sdxx37.png"></p>
+<p>SGD的缺点是在解决某些问题时可能没有效率</p>
+<p>低效的根本原因是，梯度的方向并没有指向最小值的方向</p>
+<hr>
+<h3 id="Momentum"><a href="#Momentum" class="headerlink" title="Momentum"></a>Momentum</h3><p><img src="https://www.helloimg.com/i/2024/10/09/6706137fd028c.png" alt="sdxx38.png"></p>
+<p>Python代码实现如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Momentum</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, lr=<span class="number">0.01</span>, momentum=<span class="number">0.9</span></span>):</span><br><span class="line">        self.lr = lr</span><br><span class="line">        self.momentum = momentum</span><br><span class="line">        self.v = <span class="literal">None</span></span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">update</span>(<span class="params">self, params, grads</span>):</span><br><span class="line">        <span class="keyword">if</span> self.v <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            self.v = &#123;&#125;</span><br><span class="line">            <span class="keyword">for</span> key, val <span class="keyword">in</span> params.items():</span><br><span class="line">	            self.v[key] = np.zeros_like(val)</span><br><span class="line">                </span><br><span class="line">        <span class="keyword">for</span> key <span class="keyword">in</span> params.keys():</span><br><span class="line">            self.v[key] = self.momentum*self.v[key] - self.lr*grads[key]</span><br><span class="line">            params[key] += self.v[key]</span><br><span class="line">            </span><br><span class="line"><span class="comment"># 实例变量v会保存物体的速度</span></span><br><span class="line"><span class="comment"># 初始化时，v中什么都不保存，但当第一次调用update()时，v会以字典型变量的形式保存与参数结构相同的数据</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="AdaGrad"><a href="#AdaGrad" class="headerlink" title="AdaGrad"></a>AdaGrad</h3><p>在神经网络的学习中，学习率（数学式中记为<em>η</em>）的值很重要</p>
+<p>学习率过小，会导致学习花费过多时间；</p>
+<p>反过来，学习率过大，则会导致学习发散而不能正确进行</p>
+<p>在关于学习率的有效技巧中，有一种被称为学习率衰减（learning rate decay）的方法</p>
+<p>&#x3D;&#x3D;即随着学习的进行，使学习率逐渐减小&#x3D;&#x3D;</p>
+<p>实际上，一开始“多”学，然后逐渐“少”学的方法，在神经网络的学习中经常被使用</p>
+<p>逐渐减小学习率的想法，相当于将“全体”参数的学习率值一起降低</p>
+<p>而AdaGrad进一步发展了这个想法，针对“一个一个”的参数，赋予其“定制”的值</p>
+<p>Ada来自英文单词Adaptive，即“适当的”的意思</p>
+<p><img src="https://www.helloimg.com/i/2024/10/09/6706159164a8d.png" alt="sdxx39.png"></p>
+<p><img src="https://www.helloimg.com/i/2024/10/09/6706158f88e65.png" alt="sdxx40.png"></p>
+<p>Python代码实现如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">AdaGrad</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, lr=<span class="number">0.01</span></span>):</span><br><span class="line">        self.lr = lr</span><br><span class="line">        self.h = <span class="literal">None</span></span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">update</span>(<span class="params">self, params, grads</span>):</span><br><span class="line">        <span class="keyword">if</span> self.h <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            self.h = &#123;&#125;</span><br><span class="line">            <span class="keyword">for</span> key, val <span class="keyword">in</span> params.items():</span><br><span class="line">                self.h[key] = np.zeros_like(val)</span><br><span class="line">            </span><br><span class="line">        <span class="keyword">for</span> key <span class="keyword">in</span> params.keys():</span><br><span class="line">            self.h[key] += grads[key] * grads[key]</span><br><span class="line">            params[key] -= self.lr * grads[key] / (np.sqrt(self.h[key]) + <span class="number">1e-7</span>)</span><br><span class="line">            <span class="comment"># 最后一行加上了微小值1e-7。这是为了防止当self.h[key]中有0时，将0用作除数的情况</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="Adam"><a href="#Adam" class="headerlink" title="Adam"></a>Adam</h3><p>它的理论有些复杂，直观地讲，就是&#x3D;&#x3D;融合了Momentum和AdaGrad的方法&#x3D;&#x3D;</p>
+<p>通过组合前面两个方法的优点，有望实现参数空间的高效搜索</p>
+<p>此外，进行超参数的“偏置校正”也是Adam的特征</p>
+<p>Python代码实现如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Adam</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, lr=<span class="number">0.001</span>, beta1=<span class="number">0.9</span>, beta2=<span class="number">0.999</span></span>):</span><br><span class="line">        self.lr = lr</span><br><span class="line">        self.beta1 = beta1</span><br><span class="line">        self.beta2 = beta2</span><br><span class="line">        self.<span class="built_in">iter</span> = <span class="number">0</span></span><br><span class="line">        self.m = <span class="literal">None</span></span><br><span class="line">        self.v = <span class="literal">None</span></span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">update</span>(<span class="params">self, params, grads</span>):</span><br><span class="line">        <span class="keyword">if</span> self.m <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            self.m, self.v = &#123;&#125;, &#123;&#125;</span><br><span class="line">            <span class="keyword">for</span> key, val <span class="keyword">in</span> params.items():</span><br><span class="line">                self.m[key] = np.zeros_like(val)</span><br><span class="line">                self.v[key] = np.zeros_like(val)</span><br><span class="line">        </span><br><span class="line">        self.<span class="built_in">iter</span> += <span class="number">1</span></span><br><span class="line">        lr_t  = self.lr * np.sqrt(<span class="number">1.0</span> - self.beta2**self.<span class="built_in">iter</span>) / (<span class="number">1.0</span> - self.beta1**self.<span class="built_in">iter</span>)         </span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> key <span class="keyword">in</span> params.keys():</span><br><span class="line">            <span class="comment">#self.m[key] = self.beta1*self.m[key] + (1-self.beta1)*grads[key]</span></span><br><span class="line">            <span class="comment">#self.v[key] = self.beta2*self.v[key] + (1-self.beta2)*(grads[key]**2)</span></span><br><span class="line">            self.m[key] += (<span class="number">1</span> - self.beta1) * (grads[key] - self.m[key])</span><br><span class="line">            self.v[key] += (<span class="number">1</span> - self.beta2) * (grads[key]**<span class="number">2</span> - self.v[key])</span><br><span class="line">            </span><br><span class="line">            params[key] -= lr_t * self.m[key] / (np.sqrt(self.v[key]) + <span class="number">1e-7</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="comment">#unbias_m += (1 - self.beta1) * (grads[key] - self.m[key]) # correct bias</span></span><br><span class="line">            <span class="comment">#unbisa_b += (1 - self.beta2) * (grads[key]*grads[key] - self.v[key]) # correct bias</span></span><br><span class="line">            <span class="comment">#params[key] += self.lr * unbias_m / (np.sqrt(unbisa_b) + 1e-7)</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>四种方法各有特点，应根据实际情况选择方法</p>
+<hr>
+<h3 id="权重的初始值"><a href="#权重的初始值" class="headerlink" title="权重的初始值"></a>权重的初始值</h3><p>在神经网络的学习中，权重的初始值特别重要</p>
+<p>实际上，设定什么样的权重初始值，经常关系到神经网络的学习能否成功</p>
+<p>权值衰减就是一种以减小权重参数的值为目的进行学习的方法</p>
+<p>通过减小权重参数的值来抑制过拟合的发生</p>
+<p>如果想减小权重的值</p>
+<p>一开始就将初始值设为较小的值才是正途</p>
+<p>如果我们把权重初始值全部设为0以减小权重的值，会怎么样呢？</p>
+<p>答案是NO!!</p>
+<p>事实上，将权重初始值设为0的话，将无法正确进行学习</p>
+<p>不能将权重初始值设为0</p>
+<p>严格地说，不能将权重初始值设成一样的值</p>
+<p>这是因为在误差反向传播法中，所有的权重值都会进行相同的更新</p>
+<p>比如，在2层神经网络中，假设第1层和第2层的权重为0</p>
+<p>这样一来，正向传播时，因为输入层的权重为0，所以第2层的神经元全部会被传递相同的值</p>
+<p>第2层的神经元中全部输入相同的值</p>
+<p>这意味着反向传播时第2层的权重全部都会进行相同的更新</p>
+<p>因此，权重被更新为相同的值，并拥有了对称的值（重复的值）</p>
+<p>这使得神经网络拥有许多不同的权重的意义丧失了</p>
+<p>为了防止“权重均一化”（严格地讲，是为了瓦解权重的对称结构）</p>
+<p>必须随机生成初始值</p>
+<p>尝试使用Xavier Glorot等人的论文中推荐的权重初始值</p>
+<p>（俗称“Xavier初始值”）</p>
+<p>现在，在一般的深度学习框架中，Xavier初始值已被作为标准使用</p>
+<p>比如，Caffe框架中，通过在设定权重初始值时赋予xavier参数，就可以使用Xavier初始值</p>
+<p>为了使各层的激活值呈现出具有相同广度的分布</p>
+<p>推导了合适的权重尺度</p>
+<p>结论是</p>
+<p>如果前一层的节点数为n</p>
+<p>则初始值使用标准差为根号n分之1的分布</p>
+<p><img src="https://img.picgo.net/2024/10/29/417efc59cf0eb26144.png" alt="41"></p>
+<hr>
+<p><img src="https://img.picgo.net/2024/10/29/423f9a6f4caed1e0c0.png" alt="42"></p>
+<p>当激活函数使用ReLU时，权重初始值使用He初始值</p>
+<p>当激活函数为sigmoid或tanh等S型曲线函数时，初始值使用Xavier初始值</p>
+<p>这是目前的最佳实践</p>
+<hr>
+<h3 id="Batch-Normalization"><a href="#Batch-Normalization" class="headerlink" title="Batch Normalization"></a>Batch Normalization</h3><p>Batch Norm有以下优点</p>
+<p>• 可以使学习快速进行（可以增大学习率）</p>
+<p>• 不那么依赖初始值（对于初始值不用那么神经质）</p>
+<p>• 抑制过拟合（降低Dropout等的必要性）</p>
+<p><img src="https://img.picgo.net/2024/10/29/43894b195c4955e7c3.png" alt="43"></p>
+<hr>
+<h3 id="过拟合"><a href="#过拟合" class="headerlink" title="过拟合"></a>过拟合</h3><p>机器学习的问题中，过拟合是一个很常见的问题</p>
+<p>过拟合指的是只能拟合训练数据，但不能很好地拟合不包含在训练数据中的其他数据的状态</p>
+<p>机器学习的目标是提高泛化能力</p>
+<p>即便是没有包含在训练数据里的未观测数据</p>
+<p>也希望模型可以进行正确的识别</p>
+<p>我们可以制作复杂的、表现力强的模型</p>
+<p>但是相应地</p>
+<p>抑制过拟合的技巧也很重要</p>
+<p>发生过拟合的原因，主要有以下两个:</p>
+<p>• 模型拥有大量参数、表现力强</p>
+<p>• 训练数据少</p>
+<hr>
+<h3 id="抑制过拟合"><a href="#抑制过拟合" class="headerlink" title="抑制过拟合"></a>抑制过拟合</h3><p>权值衰减是一直以来经常被使用的一种抑制过拟合的方法</p>
+<p>该方法通过在学习的过程中对大的权重进行惩罚来抑制过拟合</p>
+<p>很多过拟合原本就是因为权重参数取值过大才发生的</p>
+<p>但是，如果网络的模型变得很复杂，只用权值衰减就难以应对了</p>
+<p>在这种情况下，我们经常会使用Dropout方法</p>
+<p>Dropout是一种在学习的过程中随机删除神经元的方法</p>
+<p>训练时，随机选出隐藏层的神经元，然后将其删除</p>
+<p>被删除的神经元不再进行信号的传递</p>
+<p>训练时，每传递一次数据，就会随机选择要删除的神经元</p>
+<p>测试时，虽然会传递所有的神经元信号</p>
+<p>但是对于各个神经元的输出</p>
+<p>要乘上训练时的删除比例后再输出</p>
+<p>python实现Dropout</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Dropout</span>:</span><br><span class="line">	<span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, dropout_ratio=<span class="number">0.5</span></span>):</span><br><span class="line">    	self.dropout_ratio = dropout_ratio</span><br><span class="line">	    self.mask = <span class="literal">None</span></span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">forward</span>(<span class="params">self, x, train_flg=<span class="literal">True</span></span>):</span><br><span class="line">    	<span class="keyword">if</span> train_flg:</span><br><span class="line">		    self.mask = np.random.rand(*x.shape) &gt; self.dropout_ratio</span><br><span class="line">		    <span class="keyword">return</span> x * self.mask</span><br><span class="line">	    <span class="keyword">else</span>:</span><br><span class="line">    		<span class="keyword">return</span> x * (<span class="number">1.0</span> - self.dropout_ratio)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">backward</span>(<span class="params">self, dout</span>):</span><br><span class="line">	    <span class="keyword">return</span> dout * self.mask</span><br><span class="line">    </span><br></pre></td></tr></table></figure>
+
+<p>每次正向传播时</p>
+<p>self.mask中都会以False的形式保存要删除的神经元</p>
+<p>self.mask会随机生成和x形状相同的数组</p>
+<p>并将值比dropout_ratio大的元素设为True</p>
+<p>反向传播时的行为和ReLU相同</p>
+<p>也就是说</p>
+<p>正向传播时传递了信号的神经元</p>
+<p>反向传播时按原样传递信号</p>
+<p>正向传播时没有传递信号的神经元</p>
+<p>反向传播时信号将停在那里</p>
+<p>通过使用Dropout</p>
+<p>即便是表现力强的网络，也可以抑制过拟合</p>
+<blockquote>
+<p>机器学习中经常使用集成学习</p>
+<p>所谓集成学习</p>
+<p>就是让多个模型单独进行学习</p>
+<p>推理时再取多个模型的输出的平均值</p>
+<p>用神经网络的语境来说</p>
+<p>比如，准备 5个结构相同（或者类似）的网络，分别进行学习</p>
+<p>测试时，以这 5个网络的输出的平均值作为答案</p>
+<p>实验告诉我们</p>
+<p>通过进行集成学习，神经网络的识别精度可以提高好几个百分点</p>
+<p>这个集成学习与 Dropout有密切的关系</p>
+<p>这是因为可以将 Dropout理解为</p>
+<p>通过在学习过程中随机删除神经元，从而每一次都让不同的模型进行学习</p>
+<p>并且推理时，通过对神经元的输出乘以删除比例（比如，0.5等）</p>
+<p>可以取得模型的平均值</p>
+<p>也就是说</p>
+<p>可以理解成Dropout将集成学习的效果（模拟地）通过一个网络实现了</p>
+</blockquote>
+<hr>
+<p>之前我们使用的数据集分成了训练数据和测试数据</p>
+<p>训练数据用于学习</p>
+<p>测试数据用于评估泛化能力</p>
+<p>由此就可以评估是否只过度拟合了训练数据（是否发生了过拟合）</p>
+<p>以及泛化能力如何等</p>
+<p>&#x3D;&#x3D;不能使用测试数据评估超参数的性能&#x3D;&#x3D;</p>
+<p>如果使用测试数</p>
+<p>据调整超参数</p>
+<p>超参数的值会对测试数据发生过拟合</p>
+<p>换句话说，用测试数据确认超参数的值的“好坏”</p>
+<p>就会导致超参数的值被调整为只拟合测试数据</p>
+<p>这样的话，可能就会得到不能拟合其他数据、泛化能力低的模型</p>
+<p>调整超参数时</p>
+<p>必须使用超参数专用的确认数据</p>
+<p>用于调整超参数的数据，一般称为验证数据</p>
+<p>为了确认泛化能力</p>
+<p>要在最后使用（比较理想的是只用一次）测试数据</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://XTERNALXLUE.github.io">XTERNALXLUE</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xternalxlue.github.io/2024/10/09/%E3%80%90%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8%E3%80%91%E5%8F%82%E6%95%B0%E7%9A%84%E6%9B%B4%E6%96%B0/">https://xternalxlue.github.io/2024/10/09/%E3%80%90%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8%E3%80%91%E5%8F%82%E6%95%B0%E7%9A%84%E6%9B%B4%E6%96%B0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://XTERNALXLUE.github.io" target="_blank">XTERNALXLUE's blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a></div><div class="post_share"><div class="social-share" data-image="/./img/bg42.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/10/10/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91PTA-7-25-%E6%9C%8B%E5%8F%8B%E5%9C%88/" title="【每日一题】PTA-7-25-朋友圈"><img class="cover" src="/./img/bg48.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">【每日一题】PTA-7-25-朋友圈</div></div></a></div><div class="next-post pull-right"><a href="/2024/10/09/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91PTA-7-15-QQ%E8%B4%A6%E6%88%B7%E7%9A%84%E7%94%B3%E8%AF%B7%E4%B8%8E%E7%99%BB%E9%99%86/" title="【每日一题】PTA-7-15-QQ账户的申请与登陆"><img class="cover" src="/./img/bg24.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">【每日一题】PTA-7-15-QQ账户的申请与登陆</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2024/10/29/%E3%80%90%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8%E3%80%91%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" title="【深度学习入门】卷积神经网络"><img class="cover" src="/./img/bg7.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-29</div><div class="title">【深度学习入门】卷积神经网络</div></div></a></div><div><a href="/2024/09/10/%E3%80%90%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8%E3%80%91%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" title="【深度学习入门】神经网络"><img class="cover" src="/./img/bg29.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-09-10</div><div class="title">【深度学习入门】神经网络</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/./img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">XTERNALXLUE</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">320</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">75</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/XTERNALXLUE"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">hh</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E3%80%90%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%85%A5%E9%97%A8%E3%80%91%E5%8F%82%E6%95%B0%E7%9A%84%E6%9B%B4%E6%96%B0"><span class="toc-number">1.</span> <span class="toc-text">【深度学习入门】参数的更新</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9A%8F%E6%9C%BA%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D%E6%B3%95SGD%EF%BC%88stochastic-gradient-descent%EF%BC%89"><span class="toc-number">1.1.</span> <span class="toc-text">随机梯度下降法SGD（stochastic gradient descent）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Momentum"><span class="toc-number">1.2.</span> <span class="toc-text">Momentum</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AdaGrad"><span class="toc-number">1.3.</span> <span class="toc-text">AdaGrad</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Adam"><span class="toc-number">1.4.</span> <span class="toc-text">Adam</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%83%E9%87%8D%E7%9A%84%E5%88%9D%E5%A7%8B%E5%80%BC"><span class="toc-number">1.5.</span> <span class="toc-text">权重的初始值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Batch-Normalization"><span class="toc-number">1.6.</span> <span class="toc-text">Batch Normalization</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%87%E6%8B%9F%E5%90%88"><span class="toc-number">1.7.</span> <span class="toc-text">过拟合</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%91%E5%88%B6%E8%BF%87%E6%8B%9F%E5%90%88"><span class="toc-number">1.8.</span> <span class="toc-text">抑制过拟合</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/04/02/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3957-GESP202403%E4%B8%89%E7%BA%A7-%E5%AE%8C%E5%85%A8%E5%B9%B3%E6%96%B9%E6%95%B0/" title="【每日一题】洛谷-B3957-[GESP202403 三级] 完全平方数"><img src="/./img/bg42.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【每日一题】洛谷-B3957-[GESP202403 三级] 完全平方数"/></a><div class="content"><a class="title" href="/2025/04/02/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3957-GESP202403%E4%B8%89%E7%BA%A7-%E5%AE%8C%E5%85%A8%E5%B9%B3%E6%96%B9%E6%95%B0/" title="【每日一题】洛谷-B3957-[GESP202403 三级] 完全平方数">【每日一题】洛谷-B3957-[GESP202403 三级] 完全平方数</a><time datetime="2025-04-02T04:41:50.000Z" title="发表于 2025-04-02 12:41:50">2025-04-02</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/04/01/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3868-GESP202309%E4%B8%89%E7%BA%A7-%E8%BF%9B%E5%88%B6%E5%88%A4%E6%96%AD/" title="【每日一题】洛谷-B3868-[GESP202309 三级] 进制判断"><img src="/./img/bg7.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【每日一题】洛谷-B3868-[GESP202309 三级] 进制判断"/></a><div class="content"><a class="title" href="/2025/04/01/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3868-GESP202309%E4%B8%89%E7%BA%A7-%E8%BF%9B%E5%88%B6%E5%88%A4%E6%96%AD/" title="【每日一题】洛谷-B3868-[GESP202309 三级] 进制判断">【每日一题】洛谷-B3868-[GESP202309 三级] 进制判断</a><time datetime="2025-04-01T04:07:09.000Z" title="发表于 2025-04-01 12:07:09">2025-04-01</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/31/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3842-GESP202306%E4%B8%89%E7%BA%A7-%E6%98%A5%E6%B8%B8/" title="【每日一题】洛谷-B3842-[GESP202306 三级] 春游"><img src="/./img/bg21.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【每日一题】洛谷-B3842-[GESP202306 三级] 春游"/></a><div class="content"><a class="title" href="/2025/03/31/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3842-GESP202306%E4%B8%89%E7%BA%A7-%E6%98%A5%E6%B8%B8/" title="【每日一题】洛谷-B3842-[GESP202306 三级] 春游">【每日一题】洛谷-B3842-[GESP202306 三级] 春游</a><time datetime="2025-03-31T03:08:08.000Z" title="发表于 2025-03-31 11:08:08">2025-03-31</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/30/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3849-GESP%E6%A0%B7%E9%A2%98%E4%B8%89%E7%BA%A7-%E8%BF%9B%E5%88%B6%E8%BD%AC%E6%8D%A2/" title="【每日一题】洛谷-B3849-[GESP样题 三级] 进制转换"><img src="/./img/bg3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【每日一题】洛谷-B3849-[GESP样题 三级] 进制转换"/></a><div class="content"><a class="title" href="/2025/03/30/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3849-GESP%E6%A0%B7%E9%A2%98%E4%B8%89%E7%BA%A7-%E8%BF%9B%E5%88%B6%E8%BD%AC%E6%8D%A2/" title="【每日一题】洛谷-B3849-[GESP样题 三级] 进制转换">【每日一题】洛谷-B3849-[GESP样题 三级] 进制转换</a><time datetime="2025-03-30T03:41:20.000Z" title="发表于 2025-03-30 11:41:20">2025-03-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/29/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3843-GESP202306%E4%B8%89%E7%BA%A7-%E5%AF%86%E7%A0%81%E5%90%88%E8%A7%84/" title="【每日一题】洛谷-B3843-[GESP202306 三级] 密码合规"><img src="/./img/bg1.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="【每日一题】洛谷-B3843-[GESP202306 三级] 密码合规"/></a><div class="content"><a class="title" href="/2025/03/29/%E3%80%90%E6%AF%8F%E6%97%A5%E4%B8%80%E9%A2%98%E3%80%91%E6%B4%9B%E8%B0%B7-B3843-GESP202306%E4%B8%89%E7%BA%A7-%E5%AF%86%E7%A0%81%E5%90%88%E8%A7%84/" title="【每日一题】洛谷-B3843-[GESP202306 三级] 密码合规">【每日一题】洛谷-B3843-[GESP202306 三级] 密码合规</a><time datetime="2025-03-29T03:12:51.000Z" title="发表于 2025-03-29 11:12:51">2025-03-29</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2025 By XTERNALXLUE</div><div class="footer_custom_text">愿世间再无痛苦</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=4.14.0-b3"></script><script src="/js/main.js?v=4.14.0-b3"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.35/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = (ele) => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    Array.from(ele).forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = '%%{init:{ \'theme\':\'' + theme + '\'}}%%\n'
+      const mermaidID = 'mermaid-' + index
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+
+      const renderV10 = () => {
+        renderFn.then(({svg}) => {
+          mermaidSrc.insertAdjacentHTML('afterend', svg)
+        })
+      }
+
+      const renderV9 = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      typeof renderFn === 'string' ? renderV9(renderFn) : renderV10()
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+    
+    codeMermaidEle.forEach(ele => {
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.innerHTML = `<pre class="mermaid-src" hidden>${ele.textContent}</pre>`
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (false) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js').then(runMermaidFn)
+  }
+  
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=4.14.0-b3"></script></div></div></body></html>
